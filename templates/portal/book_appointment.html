@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Appointment - NovaCare Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styling for the interactive time slot grid */
+    .time-slot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+    }
+    
+    .time-slot-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+    }
+    
+    .time-slot-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #fff;
+    }
+    
+    .time-slot-btn.active {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.5), rgba(59, 130, 246, 0.5));
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="text-center mb-5">
+            <h1 class="display-5 text-white">Book an Appointment</h1>
+            <p class="text-white-50">Quickly schedule your session with a premium medical specialist.</p>
+        </div>
+
+        <div class="glass-card p-4 p-md-5">
+            <form method="post" id="appointment-form" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger glass-card border-0 text-white mb-4 py-3 px-4 d-flex align-items-center gap-2" style="background: rgba(239, 68, 68, 0.2);">
+                        <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="row g-4">
+                    <!-- Patient Name -->
+                    <div class="col-md-6">
+                        <label for="{{ form.patient_name.id_for_label }}" class="form-label text-white-50 fw-medium">
+                            <i class="bi bi-person-fill me-1"></i>Patient Full Name
+                        </label>
+                        {{ form.patient_name }}
+                        {% if form.patient_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.patient_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Patient Phone -->
+                    <div class="col-md-6">
+                        <label for="{{ form.patient_phone.id_for_label }}" class="form-label text-white-50 fw-medium">
+                            <i class="bi bi-telephone-fill me-1"></i>Contact Phone Number
+                        </label>
+                        {{ form.patient_phone }}
+                        {% if form.patient_phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.patient_phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Doctor Selection -->
+                    <div class="col-md-6">
+                        <label for="{{ form.doctor.id_for_label }}" class="form-label text-white-50 fw-medium">
+                            <i class="bi bi-person-heart me-1"></i>Select Specialist
+                        </label>
+                        {{ form.doctor }}
+                        {% if form.doctor.errors %}
+                            <div class="text-danger small mt-1">{{ form.doctor.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Appointment Date -->
+                    <div class="col-md-6">
+                        <label for="{{ form.appointment_date.id_for_label }}" class="form-label text-white-50 fw-medium">
+                            <i class="bi bi-calendar-event-fill me-1"></i>Appointment Date
+                        </label>
+                        {{ form.appointment_date }}
+                        {% if form.appointment_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.appointment_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Time Slot Field (Hidden native select, driven by the custom grid) -->
+                    <div class="col-12 d-none">
+                        {{ form.time_slot }}
+                    </div>
+
+                    <!-- Custom Time Slot Selector Grid -->
+                    <div class="col-12">
+                        <label class="form-label text-white-50 fw-medium d-block mb-3">
+                            <i class="bi bi-clock-fill me-1"></i>Choose Available Time Slot
+                        </label>
+                        <div class="time-slot-grid" id="custom-time-slot-container">
+                            {% for value, label in form.fields.time_slot.choices %}
+                                {% if value %}
+                                    <button type="button" class="btn time-slot-btn py-3" data-value="{{ value }}">
+                                        <i class="bi bi-clock me-1 text-purple"></i> {{ label }}
+                                    </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% if form.time_slot.errors %}
+                            <div class="text-danger small mt-2 d-block">{{ form.time_slot.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Reason for Appointment -->
+                    <div class="col-12">
+                        <label for="{{ form.reason.id_for_label }}" class="form-label text-white-50 fw-medium">
+                            <i class="bi bi-chat-square-text-fill me-1"></i>Reason / Symptoms
+                        </label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                            <div class="text-danger small mt-1">{{ form.reason.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="border-white-50 opacity-20 my-5">
+
+                <div class="d-flex flex-column flex-md-row justify-content-end gap-3">
+                    <a href="{% url 'doctor_list' %}" class="glass-btn text-decoration-none">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                    <button type="submit" class="glass-btn glass-btn-primary">
+                        <i class="bi bi-bookmark-check-fill"></i> Confirm Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const nativeSelect = document.getElementById('{{ form.time_slot.id_for_label }}');
+        const customContainer = document.getElementById('custom-time-slot-container');
+        const customButtons = customContainer.querySelectorAll('.time-slot-btn');
+        const doctorSelect = document.getElementById('{{ form.doctor.id_for_label }}');
+        
+        // 1. Interactive Time Slot Selector logic
+        // Set initial active state if value is already selected (e.g. form redisplays after error)
+        if (nativeSelect.value) {
+            const activeBtn = customContainer.querySelector(`[data-value="${nativeSelect.value}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        // On button click, update native hidden select
+        customButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from others
+                customButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Set native select value
+                nativeSelect.value = this.getAttribute('data-value');
+            });
+        });
+
+        // 2. Pre-select doctor from Query URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const doctorId = urlParams.get('doctor');
+        if (doctorId && doctorSelect) {
+            doctorSelect.value = doctorId;
+        }
+    });
+</script>
+{% endblock %}

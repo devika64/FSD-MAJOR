@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NovaCare Portal{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Premium background glow elements -->
+    <div class="bg-glow-container">
+        <div class="bg-glow-orb orb-1"></div>
+        <div class="bg-glow-orb orb-2"></div>
+        <div class="bg-glow-orb orb-3"></div>
+    </div>
+
+    <!-- Minimal Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark glass-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-4" href="{% url 'doctor_list' %}">
+                <i class="bi bi-hospital" style="color: #c084fc;"></i>
+                <span>NovaCare Portal</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-2 mt-2 mt-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 {% if request.resolver_match.url_name == 'doctor_list' %}active{% endif %}" href="{% url 'doctor_list' %}">
+                            <i class="bi bi-person-badge"></i> Doctors
+                        </a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                        {% if user.is_superuser or user.is_staff %}
+                            <li class="nav-item">
+                                <a class="nav-link px-3 {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}">
+                                    <i class="bi bi-shield-lock-fill"></i> Admin Panel
+                                </a>
+                            </li>
+                        {% elif user.doctor_profile %}
+                            <li class="nav-item">
+                                <a class="nav-link px-3 {% if request.resolver_match.url_name == 'doctor_dashboard' %}active{% endif %}" href="{% url 'doctor_dashboard' %}">
+                                    <i class="bi bi-grid-1x2-fill"></i> Doctor Panel
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link px-3 {% if request.resolver_match.url_name == 'book_appointment' %}active{% endif %}" href="{% url 'book_appointment' %}">
+                                    <i class="bi bi-calendar-plus"></i> Book Appointment
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link px-3 {% if request.resolver_match.url_name == 'patient_dashboard' %}active{% endif %}" href="{% url 'patient_dashboard' %}">
+                                    <i class="bi bi-journal-medical"></i> My Appointments
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item ms-lg-2">
+                            <span class="navbar-text me-3 d-none d-lg-inline text-white-50">
+                                <i class="bi bi-person-circle"></i> Hello, <strong>{{ user.first_name|default:user.username }}</strong>
+                            </span>
+                            <a class="btn btn-outline-danger btn-sm px-3" href="{% url 'logout' %}">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link px-3 {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-primary btn-sm px-3 text-white" href="{% url 'register' %}" style="background: linear-gradient(135deg, #a855f7, #3b82f6); border: none;">
+                                <i class="bi bi-person-plus"></i> Sign Up
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-5 flex-grow-1">
+        {% if messages %}
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-8">
+                    {% for message in messages %}
+                        <div class="alert alert-dismissible fade show glass-card border-0 mb-2 py-3 px-4 d-flex align-items-center justify-content-between {% if message.tags == 'success' %}alert-success-glass{% elif message.tags == 'error' %}alert-danger-glass{% else %}alert-info-glass{% endif %}" role="alert" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);">
+                            <div class="d-flex align-items-center gap-2">
+                                {% if message.tags == 'success' %}
+                                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle-fill text-info fs-5"></i>
+                                {% endif %}
+                                <span class="text-white">{{ message }}</span>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-white-50 mt-auto">
+        <div class="container">
+            <p class="mb-0 small">&copy; 2026 NovaCare Hospital Portal. Dedicated to Premium Medical Care.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

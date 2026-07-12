@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Dashboard - NovaCare Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Table styling */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+    
+    .glass-table th {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+    
+    .glass-table th:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    
+    .glass-table th:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    
+    .glass-table tr.appointment-row {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-table tr.appointment-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.002);
+    }
+    
+    .glass-table tr.appointment-row td {
+        padding: 20px;
+        color: #fff;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glass-table tr.appointment-row td:first-child {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
+    }
+    
+    .glass-table tr.appointment-row td:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-right-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+
+    /* Modal premium style */
+    .glass-modal .modal-content {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        color: #ffffff;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    
+    .glass-modal .modal-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glass-modal .modal-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Navigation tabs styling */
+    .nav-tabs-glass {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-tabs-glass .nav-link {
+        color: rgba(255, 255, 255, 0.6);
+        border: none;
+        background: transparent;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .nav-tabs-glass .nav-link:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tabs-glass .nav-link.active {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.1);
+        border-bottom: 3px solid #a855f7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Doctor Welcome Header -->
+<div class="row align-items-center mb-5">
+    <div class="col-lg-8">
+        <span class="dept-pill text-purple bg-gradient text-white mb-2 d-inline-block">
+            <i class="bi bi-person-circle me-1"></i> Doctor Panel
+        </span>
+        <h1 class="display-5 text-white mb-2">Welcome, Dr. {{ doctor.name }}</h1>
+        <p class="text-white-50 fs-5 mb-0">Department: <strong>{{ doctor.get_department_display }}</strong> | Specialization: <strong>{{ doctor.specialization }}</strong></p>
+    </div>
+    <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+        <div class="glass-card py-3 px-4 d-inline-block text-start">
+            <span class="text-white-50 small d-block">Consultation Fee</span>
+            <span class="text-white fs-3 fw-bold">${{ doctor.consultation_fee }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Schedule -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="h4 text-white mb-3"><i class="bi bi-clock-history text-blue me-2"></i>Today's Appointments</h2>
+        <div class="glass-card p-4">
+            {% if todays_appointments %}
+                <div class="table-responsive">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Phone</th>
+                                <th>Time Slot</th>
+                                <th>Indication/Reason</th>
+                                <th>Status</th>
+                                <th class="text-center">Quick Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in todays_appointments %}
+                                <tr class="appointment-row">
+                                    <td class="fw-bold">{{ app.patient_name }}</td>
+                                    <td class="text-white-50">{{ app.patient_phone }}</td>
+                                    <td>
+                                        <span class="badge dept-pill py-2 px-3">
+                                            <i class="bi bi-clock me-1 text-blue"></i>{{ app.get_time_slot_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-white-50">{{ app.reason }}</td>
+                                    <td>
+                                        {% if app.status == 'PENDING' %}
+                                            <span class="glass-badge glass-badge-pending">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'CONFIRMED' %}
+                                            <span class="glass-badge glass-badge-confirmed">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'COMPLETED' %}
+                                            <span class="glass-badge glass-badge-completed">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'DECLINED' %}
+                                            <span class="glass-badge glass-badge-cancelled">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'RESCHEDULED' %}
+                                            <span class="glass-badge glass-badge-pending">Reschedule Proposed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            {% if app.status == 'PENDING' %}
+                                                <form action="{% url 'doctor_accept' app.id %}" method="post">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-success py-2 px-3 fw-bold rounded-3">Accept</button>
+                                                </form>
+                                                <button type="button" class="btn btn-sm btn-danger py-2 px-3 fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#declineModal{{ app.id }}">Decline</button>
+                                                <button type="button" class="btn btn-sm btn-primary py-2 px-3 fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#rescheduleModal{{ app.id }}">Reschedule</button>
+                                            {% elif app.status == 'CONFIRMED' %}
+                                                <button type="button" class="btn btn-sm btn-primary py-2 px-3 fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#rescheduleModal{{ app.id }}">Reschedule</button>
+                                            {% else %}
+                                                <span class="text-white-50 small">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-calendar-check display-4 text-white-50 mb-2 d-inline-block"></i>
+                    <h5 class="text-white">No Consultations Scheduled Today</h5>
+                    <p class="text-white-50 mb-0">Enjoy your free time, or check the full ledger below.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Ledger Tabs -->
+<div class="row">
+    <div class="col-12">
+        <h2 class="h4 text-white mb-3"><i class="bi bi-journal-text text-purple me-2"></i>Consultation Ledger</h2>
+        
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs nav-tabs-glass mb-4" id="ledgerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                    Pending ({% if pending_appointments %}{{ pending_appointments|length }}{% else %}0{% endif %})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="confirmed-tab" data-bs-toggle="tab" data-bs-target="#confirmed" type="button" role="tab">
+                    Confirmed ({% if confirmed_appointments %}{{ confirmed_appointments|length }}{% else %}0{% endif %})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rescheduled-tab" data-bs-toggle="tab" data-bs-target="#rescheduled" type="button" role="tab">
+                    Rescheduled ({% if rescheduled_appointments %}{{ rescheduled_appointments|length }}{% else %}0{% endif %})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+                    Completed ({% if completed_appointments %}{{ completed_appointments|length }}{% else %}0{% endif %})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="declined-tab" data-bs-toggle="tab" data-bs-target="#declined" type="button" role="tab">
+                    Declined ({% if declined_appointments %}{{ declined_appointments|length }}{% else %}0{% endif %})
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content" id="ledgerTabsContent">
+            <!-- Pending -->
+            <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                <div class="glass-card p-4">
+                    {% if pending_appointments %}
+                        {% include 'portal/snippets/doctor_appointment_table.html' with list=pending_appointments show_actions=True %}
+                    {% else %}
+                        <div class="text-center py-4"><p class="text-white-50 mb-0">No pending appointments.</p></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Confirmed -->
+            <div class="tab-pane fade" id="confirmed" role="tabpanel">
+                <div class="glass-card p-4">
+                    {% if confirmed_appointments %}
+                        {% include 'portal/snippets/doctor_appointment_table.html' with list=confirmed_appointments show_actions=True %}
+                    {% else %}
+                        <div class="text-center py-4"><p class="text-white-50 mb-0">No confirmed appointments.</p></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Rescheduled -->
+            <div class="tab-pane fade" id="rescheduled" role="tabpanel">
+                <div class="glass-card p-4">
+                    {% if rescheduled_appointments %}
+                        {% include 'portal/snippets/doctor_appointment_table.html' with list=rescheduled_appointments show_actions=False %}
+                    {% else %}
+                        <div class="text-center py-4"><p class="text-white-50 mb-0">No rescheduled appointments.</p></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Completed -->
+            <div class="tab-pane fade" id="completed" role="tabpanel">
+                <div class="glass-card p-4">
+                    {% if completed_appointments %}
+                        {% include 'portal/snippets/doctor_appointment_table.html' with list=completed_appointments show_actions=False %}
+                    {% else %}
+                        <div class="text-center py-4"><p class="text-white-50 mb-0">No completed appointments.</p></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Declined -->
+            <div class="tab-pane fade" id="declined" role="tabpanel">
+                <div class="glass-card p-4">
+                    {% if declined_appointments %}
+                        {% include 'portal/snippets/doctor_appointment_table.html' with list=declined_appointments show_actions=False %}
+                    {% else %}
+                        <div class="text-center py-4"><p class="text-white-50 mb-0">No declined appointments.</p></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Modals for Appointments -->
+{% for app in pending_appointments %}
+    {% include 'portal/snippets/doctor_action_modals.html' with app=app %}
+{% endfor %}
+{% for app in confirmed_appointments %}
+    {% include 'portal/snippets/doctor_action_modals.html' with app=app %}
+{% endfor %}
+{% for app in todays_appointments %}
+    <!-- Include modals for todays list in case they aren't in pending or confirmed -->
+    {% include 'portal/snippets/doctor_action_modals.html' with app=app %}
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - NovaCare Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Table styling */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+    
+    .glass-table th {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+    
+    .glass-table th:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    
+    .glass-table th:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    
+    .glass-table tr.appointment-row {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-table tr.appointment-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.002);
+    }
+    
+    .glass-table tr.appointment-row td {
+        padding: 20px;
+        color: #fff;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glass-table tr.appointment-row td:first-child {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
+    }
+    
+    .glass-table tr.appointment-row td:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-right-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+
+    /* Navigation tabs styling */
+    .nav-tabs-glass {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-tabs-glass .nav-link {
+        color: rgba(255, 255, 255, 0.6);
+        border: none;
+        background: transparent;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .nav-tabs-glass .nav-link:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tabs-glass .nav-link.active {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.1);
+        border-bottom: 3px solid #a855f7;
+    }
+
+    /* Department stats cards progress bar */
+    .dept-progress {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .dept-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #a855f7, #3b82f6);
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Welcome Header -->
+<div class="row align-items-center mb-5">
+    <div class="col-lg-8">
+        <span class="dept-pill text-purple bg-gradient text-white mb-2 d-inline-block">
+            <i class="bi bi-shield-lock-fill me-1"></i> System Administration
+        </span>
+        <h1 class="display-5 text-white mb-2">Hospital Command Center</h1>
+        <p class="text-white-50 fs-5 mb-0">Overview of doctor specialties, medical staff accounts, and patient schedules.</p>
+    </div>
+</div>
+
+<!-- Stats Dashboard Grid -->
+<div class="row g-4 mb-5">
+    <!-- Stat 1 -->
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100 d-flex align-items-center justify-content-between">
+            <div>
+                <span class="text-white-50 small d-block">Total Registrations</span>
+                <span class="text-white fs-2 fw-bold d-block mt-1">{{ total_appointments }}</span>
+                <span class="text-white-50 small">Consultations requests</span>
+            </div>
+            <div class="fs-1 text-purple opacity-75"><i class="bi bi-calendar-check"></i></div>
+        </div>
+    </div>
+    <!-- Stat 2 -->
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100 d-flex align-items-center justify-content-between">
+            <div>
+                <span class="text-white-50 small d-block">Today's Load</span>
+                <span class="text-white fs-2 fw-bold d-block mt-1">{{ today_appointments_count }}</span>
+                <span class="text-white-50 small">Scheduled sessions today</span>
+            </div>
+            <div class="fs-1 text-blue opacity-75"><i class="bi bi-calendar-day"></i></div>
+        </div>
+    </div>
+    <!-- Stat 3: Department Load Breakdown -->
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100">
+            <span class="text-white-50 small d-block mb-3">Load by Department</span>
+            <div class="row g-2">
+                {% for dept in dept_stats %}
+                    <div class="col-12 small">
+                        <div class="d-flex justify-content-between text-white-50 mb-1">
+                            <span>{{ dept.label }}</span>
+                            <span class="text-white fw-bold">{{ dept.count }}</span>
+                        </div>
+                        <div class="dept-progress">
+                            <div class="dept-progress-bar" style="width: {% if total_appointments > 0 %}{% widthratio dept.count total_appointments 100 %}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Controller Tabbed interface -->
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-tabs nav-tabs-glass mb-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="ledger-tab" data-bs-toggle="tab" data-bs-target="#ledger" type="button" role="tab">
+                    <i class="bi bi-journal-text me-2"></i>Appointment Ledger
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="doctors-tab" data-bs-toggle="tab" data-bs-target="#doctors" type="button" role="tab">
+                    <i class="bi bi-person-badge-fill me-2"></i>Doctor Management
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="adminTabsContent">
+            <!-- Tab 1: Appointment Ledger -->
+            <div class="tab-pane fade show active" id="ledger" role="tabpanel">
+                <!-- Search and Filter Form -->
+                <div class="glass-card p-4 mb-4">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label text-white-50 small">Filter Doctor</label>
+                            <select name="doctor" class="form-select glass-input">
+                                <option value="">All Doctors</option>
+                                {% for doc in doctors %}
+                                    <option value="{{ doc.id }}" {% if selected_doctor == doc.id %}selected{% endif %}>Dr. {{ doc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white-50 small">Filter Department</label>
+                            <select name="department" class="form-select glass-input">
+                                <option value="">All Specialties</option>
+                                {% for dept_val, dept_lbl in departments %}
+                                    <option value="{{ dept_val }}" {% if selected_department == dept_val %}selected{% endif %}>{{ dept_lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-white-50 small">Filter Status</label>
+                            <select name="status" class="form-select glass-input">
+                                <option value="">All Statuses</option>
+                                {% for status_val, status_lbl in statuses %}
+                                    <option value="{{ status_val }}" {% if selected_status == status_val %}selected{% endif %}>{{ status_lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-white-50 small">Appointment Date</label>
+                            <input type="date" name="date" class="form-control glass-input" value="{{ selected_date|default:'' }}">
+                        </div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" class="glass-btn glass-btn-primary w-100 py-2"><i class="bi bi-funnel"></i></button>
+                            <a href="{% url 'admin_dashboard' %}" class="glass-btn w-100 py-2 text-decoration-none"><i class="bi bi-x-circle"></i></a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Ledger Table -->
+                <div class="glass-card p-4">
+                    {% if appointments %}
+                        <div class="table-responsive">
+                            <table class="glass-table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient Detail</th>
+                                        <th>Specialist</th>
+                                        <th>Scheduled Date</th>
+                                        <th>Time Slot</th>
+                                        <th>Indication</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Operations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for app in appointments %}
+                                        <tr class="appointment-row">
+                                            <td>
+                                                <div class="fw-bold">{{ app.patient_name }}</div>
+                                                <div class="text-white-50 small"><i class="bi bi-phone me-1"></i>{{ app.patient_phone }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">Dr. {{ app.doctor.name }}</div>
+                                                <span class="badge dept-pill py-1 px-2 mt-1">{{ app.doctor.get_department_display }}</span>
+                                            </td>
+                                            <td>
+                                                <div><i class="bi bi-calendar3 me-1 text-purple"></i>{{ app.appointment_date|date:"M d, Y" }}</div>
+                                                <div class="text-white-50 small">Booked on {{ app.created_at|date:"M d" }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge dept-pill py-2 px-3">
+                                                    <i class="bi bi-clock me-1 text-blue"></i>{{ app.get_time_slot_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="text-white-50 text-truncate" style="max-width: 180px;" title="{{ app.reason }}">{{ app.reason }}</div>
+                                            </td>
+                                            <td>
+                                                {% if app.status == 'PENDING' %}
+                                                    <span class="glass-badge glass-badge-pending">{{ app.get_status_display }}</span>
+                                                {% elif app.status == 'CONFIRMED' %}
+                                                    <span class="glass-badge glass-badge-confirmed">{{ app.get_status_display }}</span>
+                                                {% elif app.status == 'COMPLETED' %}
+                                                    <span class="glass-badge glass-badge-completed">{{ app.get_status_display }}</span>
+                                                {% elif app.status == 'DECLINED' %}
+                                                    <span class="glass-badge glass-badge-cancelled">{{ app.get_status_display }}</span>
+                                                {% elif app.status == 'RESCHEDULED' %}
+                                                    <span class="glass-badge glass-badge-pending">Rescheduled</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2 justify-content-center">
+                                                    {% if app.status == 'PENDING' or app.status == 'RESCHEDULED' %}
+                                                        <form action="{% url 'admin_confirm' app.id %}" method="post">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-success py-1 px-2 fw-semibold rounded-3">Confirm</button>
+                                                        </form>
+                                                        <form action="{% url 'admin_cancel' app.id %}" method="post">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-danger py-1 px-2 fw-semibold rounded-3">Cancel</button>
+                                                        </form>
+                                                    {% elif app.status == 'CONFIRMED' %}
+                                                        <form action="{% url 'admin_complete' app.id %}" method="post">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-info text-white py-1 px-2 fw-semibold rounded-3">Complete</button>
+                                                        </form>
+                                                        <form action="{% url 'admin_cancel' app.id %}" method="post">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-danger py-1 px-2 fw-semibold rounded-3">Cancel</button>
+                                                        </form>
+                                                    {% else %}
+                                                        <span class="text-white-50 small">-</span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-x display-4 text-white-50 mb-3 d-inline-block"></i>
+                            <h5 class="text-white">No Appointments Matched</h5>
+                            <p class="text-white-50 mb-0">Try clearing filters or search parameters.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tab 2: Doctor Management -->
+            <div class="tab-pane fade" id="doctors" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 text-white mb-0"><i class="bi bi-people-fill me-2 text-purple"></i>Registered Consultants</h3>
+                    <a href="{% url 'admin_add_doctor' %}" class="glass-btn glass-btn-primary py-2 px-3 text-decoration-none">
+                        <i class="bi bi-plus-circle"></i> Add Doctor Specialist
+                    </a>
+                </div>
+
+                <div class="glass-card p-4">
+                    {% if doctors %}
+                        <div class="table-responsive">
+                            <table class="glass-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Department</th>
+                                        <th>Specialization</th>
+                                        <th>Consultation Fee</th>
+                                        <th>Available Days</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Operations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in doctors %}
+                                        <tr class="appointment-row">
+                                            <td class="fw-bold">Dr. {{ doc.name }}</td>
+                                            <td>
+                                                <span class="badge dept-pill py-1 px-2">{{ doc.get_department_display }}</span>
+                                            </td>
+                                            <td class="text-white-50">{{ doc.specialization }}</td>
+                                            <td class="text-white fw-bold">${{ doc.consultation_fee }}</td>
+                                            <td class="text-white-50">{{ doc.available_days }}</td>
+                                            <td>
+                                                {% if doc.is_active %}
+                                                    <span class="glass-badge glass-badge-confirmed">Active</span>
+                                                {% else %}
+                                                    <span class="glass-badge glass-badge-cancelled">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2 justify-content-center align-items-center">
+                                                    <!-- Toggle Active status -->
+                                                    <form action="{% url 'admin_toggle_doctor' doc.id %}" method="post">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-light py-1 px-2 rounded-3" title="Toggle Status">
+                                                            {% if doc.is_active %}Deactivate{% else %}Activate{% endif %}
+                                                        </button>
+                                                    </form>
+                                                    
+                                                    <!-- Edit link -->
+                                                    <a href="{% url 'admin_edit_doctor' doc.id %}" class="btn btn-sm btn-primary py-1 px-2 rounded-3 text-decoration-none">Edit</a>
+                                                    
+                                                    <!-- Delete form -->
+                                                    <form action="{% url 'admin_delete_doctor' doc.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete Dr. {{ doc.name }} and their user account? This cannot be undone.');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-danger py-1 px-2 rounded-3"><i class="bi bi-trash"></i></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-people display-4 text-white-50 mb-3 d-inline-block"></i>
+                            <h5 class="text-white">No Doctor Records Found</h5>
+                            <p class="text-white-50 mb-0">Create new doctor profile using the button above.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Dashboard - NovaCare Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Table styling */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+    
+    .glass-table th {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+    
+    .glass-table th:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    
+    .glass-table th:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    
+    .glass-table tr.appointment-row {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-table tr.appointment-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.002);
+    }
+    
+    .glass-table tr.appointment-row td {
+        padding: 20px;
+        color: #fff;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glass-table tr.appointment-row td:first-child {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
+    }
+    
+    .glass-table tr.appointment-row td:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-right-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h1 class="h2 fw-bold text-white mb-1">My Dashboard</h1>
+        <p class="text-white-50 mb-0">Track your consultation schedule and response messages.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'book_appointment' %}" class="glass-btn glass-btn-primary px-4">
+            <i class="bi bi-calendar-plus me-1"></i> Book New Appointment
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Appointments -->
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <h3 class="h5 fw-bold mb-4 text-white"><i class="bi bi-calendar-check text-purple me-2"></i>Appointment Ledger</h3>
+            
+            {% if appointments %}
+                <div class="table-responsive d-none d-lg-block">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th>Consultant</th>
+                                <th>Proposed Date</th>
+                                <th>Time Slot</th>
+                                <th>Indication/Reason</th>
+                                <th>Status</th>
+                                <th class="text-center">Actions / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in appointments %}
+                                <tr class="appointment-row">
+                                    <td>
+                                        <div class="fw-bold text-white">Dr. {{ app.doctor.name }}</div>
+                                        <div class="small text-white-50">{{ app.doctor.get_department_display }}</div>
+                                    </td>
+                                    <td>
+                                        <div><i class="bi bi-calendar3 text-purple me-1"></i>{{ app.appointment_date|date:"d M, Y" }}</div>
+                                        <div class="small text-white-50">Booked on {{ app.created_at|date:"d M" }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge dept-pill py-2 px-3">
+                                            <i class="bi bi-clock me-1 text-blue"></i>{{ app.get_time_slot_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate text-white-50" style="max-width: 250px;" title="{{ app.reason }}">
+                                            {{ app.reason }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'PENDING' %}
+                                            <span class="glass-badge glass-badge-pending">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'CONFIRMED' %}
+                                            <span class="glass-badge glass-badge-confirmed">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'DECLINED' %}
+                                            <span class="glass-badge glass-badge-cancelled">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'COMPLETED' %}
+                                            <span class="glass-badge glass-badge-completed">{{ app.get_status_display }}</span>
+                                        {% elif app.status == 'RESCHEDULED' %}
+                                            <span class="glass-badge glass-badge-pending">Rescheduled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'RESCHEDULED' and app.patient_response == 'PENDING' %}
+                                            <div class="glass-card p-3 my-2" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.3);">
+                                                <div class="fw-bold text-white mb-2">
+                                                    <i class="bi bi-info-circle-fill text-purple me-1"></i> Dr. {{ app.doctor.name }} proposed rescheduling:
+                                                </div>
+                                                <div class="small text-white-50 mb-3">
+                                                    <strong>Proposed Date:</strong> {{ app.rescheduled_date|date:"d M, Y" }} <br>
+                                                    <strong>Proposed Time:</strong> {{ app.get_rescheduled_time_display }} <br>
+                                                    <strong>Message:</strong> "{{ app.doctor_response_message }}"
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <form action="{% url 'patient_respond_reschedule' app.id %}" method="post">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="response" value="accept">
+                                                        <button type="submit" class="btn btn-success btn-sm px-3 fw-bold rounded-3">Accept Proposal</button>
+                                                    </form>
+                                                    <form action="{% url 'patient_respond_reschedule' app.id %}" method="post">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="response" value="reject">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm px-3 fw-bold rounded-3">Reject</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        {% elif app.status == 'DECLINED' and app.declined_reason %}
+                                            <div class="small text-danger my-1">
+                                                <strong>Reason:</strong> "{{ app.declined_reason }}"
+                                            </div>
+                                        {% elif app.status == 'RESCHEDULED' and app.patient_response != 'PENDING' %}
+                                            <div class="small text-white-50 my-1">
+                                                Reschedule proposal: <strong>{{ app.get_patient_response_display }}</strong>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-white-50 small">No actions required</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card-based Layout -->
+                <div class="d-lg-none">
+                    {% for app in appointments %}
+                        <div class="glass-card p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h4 class="h6 fw-bold text-white mb-1">Dr. {{ app.doctor.name }}</h4>
+                                    <span class="badge dept-pill py-1 px-2 small mb-2">{{ app.doctor.get_department_display }}</span>
+                                </div>
+                                <div>
+                                    {% if app.status == 'PENDING' %}
+                                        <span class="glass-badge glass-badge-pending">{{ app.get_status_display }}</span>
+                                    {% elif app.status == 'CONFIRMED' %}
+                                        <span class="glass-badge glass-badge-confirmed">{{ app.get_status_display }}</span>
+                                    {% elif app.status == 'DECLINED' %}
+                                        <span class="glass-badge glass-badge-cancelled">{{ app.get_status_display }}</span>
+                                    {% elif app.status == 'COMPLETED' %}
+                                        <span class="glass-badge glass-badge-completed">{{ app.get_status_display }}</span>
+                                    {% elif app.status == 'RESCHEDULED' %}
+                                        <span class="glass-badge glass-badge-pending">Rescheduled</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <hr class="border-white-50 opacity-20 my-2">
+                            
+                            <div class="row g-2 mb-2 small text-white-50">
+                                <div class="col-6">
+                                    <strong>Date:</strong><br>
+                                    <span class="text-white"><i class="bi bi-calendar3 me-1 text-purple"></i>{{ app.appointment_date|date:"d M, Y" }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Time Slot:</strong><br>
+                                    <span class="text-white"><i class="bi bi-clock me-1 text-blue"></i>{{ app.time_slot }}</span>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <strong>Reason:</strong><br>
+                                    <span class="text-white">{{ app.reason }}</span>
+                                </div>
+                            </div>
+
+                            {% if app.status == 'RESCHEDULED' and app.patient_response == 'PENDING' %}
+                                <div class="glass-card p-3 mt-3" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.3);">
+                                    <div class="fw-bold text-white mb-1">
+                                        <i class="bi bi-info-circle-fill text-purple"></i> Reschedule Proposal:
+                                    </div>
+                                    <div class="small text-white-50 mb-3">
+                                        <strong>Proposed Date:</strong> {{ app.rescheduled_date|date:"d M, Y" }} <br>
+                                        <strong>Proposed Time:</strong> {{ app.get_rescheduled_time_display }} <br>
+                                        <strong>Message:</strong> "{{ app.doctor_response_message }}"
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <form action="{% url 'patient_respond_reschedule' app.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="response" value="accept">
+                                            <button type="submit" class="btn btn-success btn-sm px-3 fw-bold rounded-3">Accept</button>
+                                        </form>
+                                        <form action="{% url 'patient_respond_reschedule' app.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="response" value="reject">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm px-3 fw-bold rounded-3">Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% elif app.status == 'DECLINED' and app.declined_reason %}
+                                <div class="alert alert-danger glass-card border-0 p-2 mt-2 mb-0 small text-danger" style="background: rgba(239, 68, 68, 0.15);">
+                                    <strong>Decline Reason:</strong> "{{ app.declined_reason }}"
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x text-white-50 display-4 d-inline-block mb-3"></i>
+                    <h5 class="fw-bold text-white">No appointments booked yet</h5>
+                    <p class="text-white-50 small">You haven't requested any doctor appointments yet.</p>
+                    <a href="{% url 'book_appointment' %}" class="glass-btn glass-btn-primary btn-sm px-4">Book Now</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

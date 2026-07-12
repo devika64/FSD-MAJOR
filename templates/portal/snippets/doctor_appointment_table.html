@@ -1,0 +1,74 @@
+<div class="table-responsive">
+    <table class="glass-table">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Phone</th>
+                <th>Appt Date</th>
+                <th>Time Slot</th>
+                <th>Indication/Reason</th>
+                <th>Status</th>
+                {% if show_actions %}
+                    <th class="text-center">Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in list %}
+                <tr class="appointment-row">
+                    <td class="fw-bold">{{ app.patient_name }}</td>
+                    <td class="text-white-50">{{ app.patient_phone }}</td>
+                    <td>
+                        <div><i class="bi bi-calendar3 me-1 text-purple"></i>{{ app.appointment_date|date:"M d, Y" }}</div>
+                        <div class="small text-white-50">Booked on {{ app.created_at|date:"M d" }}</div>
+                    </td>
+                    <td>
+                        <span class="badge dept-pill py-2 px-3">
+                            <i class="bi bi-clock me-1 text-blue"></i>{{ app.get_time_slot_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="text-white-50 text-truncate" style="max-width: 200px;" title="{{ app.reason }}">
+                            {{ app.reason }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if app.status == 'PENDING' %}
+                            <span class="glass-badge glass-badge-pending">{{ app.get_status_display }}</span>
+                        {% elif app.status == 'CONFIRMED' %}
+                            <span class="glass-badge glass-badge-confirmed">{{ app.get_status_display }}</span>
+                        {% elif app.status == 'COMPLETED' %}
+                            <span class="glass-badge glass-badge-completed">{{ app.get_status_display }}</span>
+                        {% elif app.status == 'DECLINED' %}
+                            <span class="glass-badge glass-badge-cancelled">{{ app.get_status_display }}</span>
+                        {% elif app.status == 'RESCHEDULED' %}
+                            <span class="glass-badge glass-badge-pending">Reschedule Proposed</span>
+                        {% endif %}
+                        
+                        {% if app.status == 'RESCHEDULED' %}
+                            <div class="small text-white-50 mt-1">
+                                Patient Response: <strong>{{ app.get_patient_response_display }}</strong>
+                            </div>
+                        {% endif %}
+                    </td>
+                    {% if show_actions %}
+                        <td>
+                            <div class="d-flex gap-2 justify-content-center">
+                                {% if app.status == 'PENDING' %}
+                                    <form action="{% url 'doctor_accept' app.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-success py-2 px-3 fw-bold rounded-3">Accept</button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-danger py-2 px-3 fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#declineModal{{ app.id }}">Decline</button>
+                                    <button type="button" class="btn btn-sm btn-primary py-2 px-3 fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#rescheduleModal{{ app.id }}">Reschedule</button>
+                                {% elif app.status == 'CONFIRMED' %}
+                                    <button type="button" class="btn btn-sm btn-primary py-2 px-3 fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#rescheduleModal{{ app.id }}">Reschedule</button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

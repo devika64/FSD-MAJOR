@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Registration - NovaCare Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .input-group > .glass-input {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-left: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass-card p-4 p-md-5 mt-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus text-purple display-4 mb-2 d-inline-block animate-float"></i>
+                <h2 class="fw-bold text-white">Patient Sign Up</h2>
+                <p class="text-white-50">Create your patient profile to request and manage appointments</p>
+            </div>
+            
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger glass-card border-0 text-white mb-3" role="alert" style="background: rgba(239, 68, 68, 0.2);">
+                        {% for error in form.non_field_errors %}
+                            <div class="small"><i class="bi bi-exclamation-circle-fill text-danger"></i> {{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label text-white-50 fw-semibold">Choose Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-person"></i></span>
+                        {{ form.username }}
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label text-white-50 fw-semibold">First Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-person-badge"></i></span>
+                            {{ form.first_name }}
+                        </div>
+                        {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mt-3 mt-md-0">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label text-white-50 fw-semibold">Last Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-person-badge"></i></span>
+                            {{ form.last_name }}
+                        </div>
+                        {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label text-white-50 fw-semibold">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-envelope"></i></span>
+                        {{ form.email }}
+                    </div>
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.password.id_for_label }}" class="form-label text-white-50 fw-semibold">Choose Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-key"></i></span>
+                        {{ form.password }}
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="glass-btn glass-btn-primary w-100 py-3 mb-3">
+                    <i class="bi bi-check2-circle me-1"></i> Register Account
+                </button>
+            </form>
+            
+            <div class="text-center border-top border-white-50 opacity-50 pt-3">
+                <p class="text-white-50 mb-0">Already registered? <a href="{% url 'login' %}" class="text-white fw-semibold text-decoration-underline">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - NovaCare Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Table Responsive Style */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+    
+    .glass-table th {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+        border: none;
+        padding: 16px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+    
+    .glass-table th:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    
+    .glass-table th:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    
+    .glass-table tr.appointment-row {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-table tr.appointment-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.005);
+    }
+    
+    .glass-table tr.appointment-row td {
+        padding: 20px;
+        color: #fff;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glass-table tr.appointment-row td:first-child {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
+    }
+    
+    .glass-table tr.appointment-row td:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-top-right-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+    
+    /* Toggle switch style */
+    .form-switch .form-check-input {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    .form-switch .form-check-input:checked {
+        background-color: #a855f7;
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .admin-controls {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-5">
+    <div class="col-md-7">
+        <h1 class="display-5 text-white mb-2">Appointment Ledger</h1>
+        <p class="text-white-50 fs-5 mb-0">Monitor past and upcoming medical sessions.</p>
+    </div>
+    <div class="col-md-5 mt-3 mt-md-0 text-md-end">
+        <!-- Admin Toggle Switch -->
+        <div class="d-inline-flex align-items-center gap-2 glass-card py-2 px-4">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="admin-mode-toggle">
+                <label class="form-check-label text-white-50 fw-semibold" for="admin-mode-toggle">
+                    <i class="bi bi-shield-lock-fill text-purple me-1"></i> Admin Operations Mode
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Desktop Table Layout -->
+<div class="d-none d-lg-block">
+    <div class="glass-card p-4">
+        {% if appointments %}
+            <div class="table-responsive">
+                <table class="glass-table">
+                    <thead>
+                        <tr>
+                            <th>Patient Detail</th>
+                            <th>Consulting Doctor</th>
+                            <th>Schedule Date</th>
+                            <th>Time Slot</th>
+                            <th>Indication/Reason</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                            <tr class="appointment-row">
+                                <td>
+                                    <div class="fw-bold">{{ appointment.patient_name }}</div>
+                                    <div class="text-white-50 small"><i class="bi bi-phone me-1"></i>{{ appointment.patient_phone }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">Dr. {{ appointment.doctor.name }}</div>
+                                    <span class="badge dept-pill py-1 px-2 mt-1">{{ appointment.doctor.get_department_display }}</span>
+                                </td>
+                                <td>
+                                    <div><i class="bi bi-calendar3 me-1 text-purple"></i>{{ appointment.appointment_date|date:"M d, Y" }}</div>
+                                    <div class="text-white-50 small">Requested on {{ appointment.created_at|date:"M d" }}</div>
+                                </td>
+                                <td>
+                                    <span class="text-white"><i class="bi bi-clock me-1 text-blue"></i>{{ appointment.time_slot }}</span>
+                                </td>
+                                <td>
+                                    <div class="text-white-50 text-truncate" style="max-width: 200px;" title="{{ appointment.reason }}">
+                                        {{ appointment.reason }}
+                                    </div>
+                                </td>
+                                <td class="text-center" style="vertical-align: middle;">
+                                    <!-- View Badge Mode -->
+                                    <div class="badge-display-mode">
+                                        {% if appointment.status == 'PENDING' %}
+                                            <span class="glass-badge glass-badge-pending">{{ appointment.get_status_display }}</span>
+                                        {% elif appointment.status == 'CONFIRMED' %}
+                                            <span class="glass-badge glass-badge-confirmed">{{ appointment.get_status_display }}</span>
+                                        {% elif appointment.status == 'COMPLETED' %}
+                                            <span class="glass-badge glass-badge-completed">{{ appointment.get_status_display }}</span>
+                                        {% elif appointment.status == 'CANCELLED' %}
+                                            <span class="glass-badge glass-badge-cancelled">{{ appointment.get_status_display }}</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Admin Selection Form Mode -->
+                                    <div class="admin-controls">
+                                        <form action="{% url 'update_status' appointment.id %}" method="post" class="d-flex align-items-center gap-1 justify-content-center">
+                                            {% csrf_token %}
+                                            <select name="status" class="form-select glass-input py-1 px-2 text-center" style="font-size: 0.8rem; width: auto;" onchange="this.form.submit()">
+                                                {% for status_val, status_lbl in appointment.STATUS_CHOICES %}
+                                                    <option value="{{ status_val }}" {% if appointment.status == status_val %}selected{% endif %}>
+                                                        {{ status_lbl }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x display-3 text-white-50 mb-3 d-inline-block"></i>
+                <h3 class="text-white">No Appointments Recorded</h3>
+                <p class="text-white-50 mb-0">Use the booking screen to request an appointment.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Mobile/Tablet Card Layout -->
+<div class="d-lg-none">
+    {% for appointment in appointments %}
+        <div class="glass-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h3 class="h5 text-white mb-1">{{ appointment.patient_name }}</h3>
+                    <p class="text-white-50 small mb-0"><i class="bi bi-phone me-1"></i>{{ appointment.patient_phone }}</p>
+                </div>
+                <div>
+                    <!-- Badge Display -->
+                    <div class="badge-display-mode">
+                        {% if appointment.status == 'PENDING' %}
+                            <span class="glass-badge glass-badge-pending">{{ appointment.get_status_display }}</span>
+                        {% elif appointment.status == 'CONFIRMED' %}
+                            <span class="glass-badge glass-badge-confirmed">{{ appointment.get_status_display }}</span>
+                        {% elif appointment.status == 'COMPLETED' %}
+                            <span class="glass-badge glass-badge-completed">{{ appointment.get_status_display }}</span>
+                        {% elif appointment.status == 'CANCELLED' %}
+                            <span class="glass-badge glass-badge-cancelled">{{ appointment.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Admin Control Form -->
+                    <div class="admin-controls">
+                        <form action="{% url 'update_status' appointment.id %}" method="post">
+                            {% csrf_token %}
+                            <select name="status" class="form-select glass-input py-1 px-2 text-center" style="font-size: 0.8rem;" onchange="this.form.submit()">
+                                {% for status_val, status_lbl in appointment.STATUS_CHOICES %}
+                                    <option value="{{ status_val }}" {% if appointment.status == status_val %}selected{% endif %}>
+                                        {{ status_lbl }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="border-white-50 opacity-20 my-3">
+            
+            <div class="row g-3">
+                <div class="col-6">
+                    <span class="text-white-50 small d-block">Specialist</span>
+                    <span class="text-white fw-semibold">Dr. {{ appointment.doctor.name }}</span>
+                    <span class="badge dept-pill py-1 px-2 d-inline-block mt-1">{{ appointment.doctor.get_department_display }}</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-white-50 small d-block">Schedule</span>
+                    <span class="text-white small d-block mb-1"><i class="bi bi-calendar3 me-1 text-purple"></i>{{ appointment.appointment_date|date:"M d, Y" }}</span>
+                    <span class="text-white small d-block"><i class="bi bi-clock me-1 text-blue"></i>{{ appointment.time_slot }}</span>
+                </div>
+                <div class="col-12">
+                    <span class="text-white-50 small d-block">Reason</span>
+                    <p class="text-white small mb-0">{{ appointment.reason }}</p>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="glass-card p-5 text-center">
+            <i class="bi bi-calendar-x display-3 text-white-50 mb-3 d-inline-block"></i>
+            <h3 class="text-white">No Appointments Recorded</h3>
+            <p class="text-white-50 mb-0">Use the booking screen to request an appointment.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggle = document.getElementById('admin-mode-toggle');
+        const badgeViews = document.querySelectorAll('.badge-display-mode');
+        const adminViews = document.querySelectorAll('.admin-controls');
+        
+        // Retrieve cached state of admin toggle from localStorage
+        const adminModeActive = localStorage.getItem('adminMode') === 'true';
+        toggle.checked = adminModeActive;
+        updateUI(adminModeActive);
+
+        toggle.addEventListener('change', function() {
+            const isChecked = this.checked;
+            localStorage.setItem('adminMode', isChecked);
+            updateUI(isChecked);
+        });
+
+        function updateUI(isAdmin) {
+            if (isAdmin) {
+                badgeViews.forEach(v => v.style.display = 'none');
+                adminViews.forEach(v => v.style.display = 'block');
+            } else {
+                badgeViews.forEach(v => v.style.display = 'block');
+                adminViews.forEach(v => v.style.display = 'none');
+            }
+        }
+    });
+</script>
+{% endblock %}

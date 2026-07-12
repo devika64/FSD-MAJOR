@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - NovaCare Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="glass-card p-4 p-md-5 mt-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock text-purple display-4 mb-2 d-inline-block animate-float"></i>
+                <h2 class="fw-bold text-white">Portal Login</h2>
+                <p class="text-white-50">Enter credentials to access your dashboard</p>
+            </div>
+            
+            <form method="post" action="{% url 'login' %}" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="username" class="form-label text-white-50 fw-semibold">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-person"></i></span>
+                        <input type="text" name="username" id="username" class="form-control glass-input" style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none;" placeholder="Enter username" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="password" class="form-label text-white-50 fw-semibold mb-0">Password</label>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px 0 0 12px;"><i class="bi bi-key"></i></span>
+                        <input type="password" name="password" id="password" class="form-control glass-input" style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none;" placeholder="Enter password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="glass-btn glass-btn-primary w-100 py-3 mb-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                </button>
+            </form>
+            
+            <div class="text-center border-top border-white-50 opacity-50 pt-3">
+                <p class="text-white-50 mb-0">Are you a new patient? <a href="{% url 'register' %}" class="text-white fw-semibold text-decoration-underline">Create an Account</a></p>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <div class="glass-card p-3">
+                <p class="mb-2 text-white fw-semibold small"><i class="bi bi-info-circle me-1"></i>Demo Login Credentials:</p>
+                <div class="row text-start small">
+                    <div class="col-6">
+                        <strong class="text-white">Doctor Arjun:</strong><br>
+                        <span class="text-white-50">User:</span> <code class="text-purple">arjun_sharma</code><br>
+                        <span class="text-white-50">Pass:</span> <code class="text-purple">doctor123</code>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-white">Administrator:</strong><br>
+                        <span class="text-white-50">User:</span> <code class="text-purple">admin</code><br>
+                        <span class="text-white-50">Pass:</span> <code class="text-purple">admin123</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

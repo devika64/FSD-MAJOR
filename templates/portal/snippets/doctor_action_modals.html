@@ -1,0 +1,67 @@
+<!-- Decline Modal for Appointment {{ app.id }} -->
+<div class="modal fade glass-modal" id="declineModal{{ app.id }}" tabindex="-1" aria-labelledby="declineModalLabel{{ app.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="declineModalLabel{{ app.id }}"><i class="bi bi-x-circle text-danger me-2"></i>Decline Appointment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'doctor_decline' app.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-white-50 mb-3">Please specify a reason for declining the appointment request from <strong>{{ app.patient_name }}</strong>.</p>
+                    <div class="mb-3">
+                        <label for="declined_reason_{{ app.id }}" class="form-label text-white-50 small fw-semibold">Reason for Decline</label>
+                        <textarea class="form-control glass-input" id="declined_reason_{{ app.id }}" name="declined_reason" rows="3" placeholder="Explain why you cannot take this appointment..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light rounded-3 px-3 py-2 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-3 px-4 py-2 fw-semibold">Decline Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal for Appointment {{ app.id }} -->
+<div class="modal fade glass-modal" id="rescheduleModal{{ app.id }}" tabindex="-1" aria-labelledby="rescheduleModalLabel{{ app.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="rescheduleModalLabel{{ app.id }}"><i class="bi bi-calendar-event text-primary me-2"></i>Propose Rescheduling</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'doctor_reschedule' app.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-white-50 mb-3">Suggest a new date and time slot for <strong>{{ app.patient_name }}</strong>. The patient will have the option to accept or reject this proposal.</p>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduled_date_{{ app.id }}" class="form-label text-white-50 small fw-semibold">New Proposed Date</label>
+                        <input type="date" class="form-control glass-input" id="rescheduled_date_{{ app.id }}" name="rescheduled_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduled_time_{{ app.id }}" class="form-label text-white-50 small fw-semibold">New Proposed Time Slot</label>
+                        <select class="form-select glass-input" id="rescheduled_time_{{ app.id }}" name="rescheduled_time" required>
+                            <option value="">Select Time Slot</option>
+                            {% for slot_val, slot_lbl in time_slots %}
+                                <option value="{{ slot_val }}" {% if app.time_slot == slot_val %}selected{% endif %}>{{ slot_lbl }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="doctor_response_message_{{ app.id }}" class="form-label text-white-50 small fw-semibold">Message for Patient (Optional)</label>
+                        <textarea class="form-control glass-input" id="doctor_response_message_{{ app.id }}" name="doctor_response_message" rows="3" placeholder="Dear Patient, I will not be available during the selected slot. Kindly consider the following alternative..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light rounded-3 px-3 py-2 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold" style="background: linear-gradient(135deg, #a855f7, #3b82f6); border: none;">Propose Reschedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
